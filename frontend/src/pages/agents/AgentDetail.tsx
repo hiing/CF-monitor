@@ -1,16 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  Box,
-  Flex,
-  Heading,
-  Text,
-  Button,
-  Card,
-  Badge,
-  Grid,
-  Avatar,
-} from "@radix-ui/themes";
+import { Box, Flex, Heading, Text, Grid, Container } from "@radix-ui/themes";
+
+import { Button, Card, Badge } from "@/components/ui";
+
 import {
   ArrowLeftIcon,
   Pencil1Icon,
@@ -22,16 +15,13 @@ import {
   DesktopIcon,
   GlobeIcon,
   Link2Icon,
+  PersonIcon,
 } from "@radix-ui/react-icons";
-import * as Toast from "@radix-ui/react-toast";
-import {
-  getAgent,
-  deleteAgent,
-  getAgentMetrics,
-} from "../../api/agents";
+import { getAgent, deleteAgent, getAgentMetrics } from "../../api/agents";
 import { Agent } from "../../types/agents";
 import { useTranslation } from "react-i18next";
 import AgentCard from "../../components/AgentCard";
+import { toast } from "sonner"; // Added
 
 // 定义客户端状态颜色映射
 const statusColors: Record<string, "red" | "green" | "yellow" | "gray"> = {
@@ -48,9 +38,6 @@ const AgentDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [toastOpen, setToastOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
-  const [toastType, setToastType] = useState<"success" | "error">("success");
   const { t } = useTranslation();
 
   const fetchAgentData = async () => {
@@ -141,33 +128,21 @@ const AgentDetail = () => {
 
     try {
       setDeleteLoading(true);
-      // 显示正在删除的Toast消息
-      setToastMessage(t("agent.deleting"));
-      setToastType("success");
-      setToastOpen(true);
+      toast.loading(t("agent.deleting")); // Added
 
       const response = await deleteAgent(Number(id));
 
       if (response.success) {
-        // 显示删除成功的Toast消息
-        setToastMessage(t("agent.deleteSuccess"));
-        setToastType("success");
-        setToastOpen(true);
-
-        // 延长延迟时间，确保Toast消息有足够时间显示
+        toast.success(t("agent.deleteSuccess"));
         setTimeout(() => {
           navigate("/agents");
         }, 3000);
       } else {
-        setToastMessage(response.message || t("agent.deleteError"));
-        setToastType("error");
-        setToastOpen(true);
+        toast.error(response.message || t("agent.deleteError"));
       }
     } catch (error) {
       console.error("删除客户端失败:", error);
-      setToastMessage(t("agent.deleteError"));
-      setToastType("error");
-      setToastOpen(true);
+      toast.error(t("agent.deleteError"));
     } finally {
       setDeleteLoading(false);
     }
@@ -176,7 +151,7 @@ const AgentDetail = () => {
   if (loading) {
     return (
       <Box>
-        <Flex className="loading-container">
+        <Flex>
           <Text>{t("agents.loadingDetail")}</Text>
         </Flex>
       </Box>
@@ -186,7 +161,7 @@ const AgentDetail = () => {
   if (error) {
     return (
       <Box>
-        <Flex className="error-container">
+        <Flex>
           <Card>
             <Flex direction="column" align="center" gap="4">
               <Heading size="6">{t("common.loadingError")}</Heading>
@@ -204,7 +179,7 @@ const AgentDetail = () => {
   if (!agent) {
     return (
       <Box>
-        <Flex justify="center" align="center" style={{ minHeight: "60vh" }}>
+        <Flex justify="center" align="center">
           <Card>
             <Flex direction="column" align="center" gap="4">
               <Heading size="6">{t("agents.notFound")}</Heading>
@@ -220,10 +195,10 @@ const AgentDetail = () => {
   }
 
   return (
-    <Box className="page-container detail-page">
-      <Flex justify="between" align="center" className="detail-header">
+    <Container size="4">
+      <Flex justify="between" align="start" direction={{ initial: "column", sm: "row" }} gap="4">
         <Flex align="center" gap="2">
-          <Button variant="soft" size="1" onClick={() => navigate("/agents")}>
+          <Button variant="secondary" onClick={() => navigate("/agents")}>
             <ArrowLeftIcon />
           </Button>
           <Heading size="6">{t("agent.details")}</Heading>
@@ -234,17 +209,23 @@ const AgentDetail = () => {
           </Badge>
         </Flex>
         <Flex gap="2">
-          <Button variant="soft" onClick={handleRefresh} disabled={loading}>
+          <Button
+            variant="secondary"
+            onClick={handleRefresh}
+            disabled={loading}
+          >
             <ReloadIcon />
             {t("common.refresh")}
           </Button>
-          <Button variant="soft" onClick={() => navigate(`/agents/edit/${id}`)}>
+          <Button
+            variant="secondary"
+            onClick={() => navigate(`/agents/edit/${id}`)}
+          >
             <Pencil1Icon />
             {t("agent.edit")}
           </Button>
           <Button
-            variant="soft"
-            color="red"
+            variant="secondary"
             onClick={handleDelete}
             disabled={deleteLoading}
           >
@@ -253,195 +234,166 @@ const AgentDetail = () => {
           </Button>
         </Flex>
       </Flex>
+      <Box py="3">
+        <Grid columns={{ initial: "1" }} gap="4">
+          {/* 系统信息卡片 */}
+          <Card>
+            <Flex direction="column" gap="2" className="ml-4">
+              <Heading size="3">{t("agent.systemInfo")}</Heading>
+              <Box>
+                <Flex align="center" gap="2">
+                  <PersonIcon />
+                  <Text as="div" size="2" weight="bold">
+                    {t("agents.table.name")}:
+                  </Text>
+                  <Text as="div" size="2">
+                    {agent.name}
+                  </Text>
+                </Flex>
+              </Box>
+              <Box>
+                <Flex align="center" gap="2">
+                  <DesktopIcon />
+                  <Text as="div" size="2" weight="bold">
+                    {t("agent.os")}:
+                  </Text>
+                  <Text as="div" size="2">
+                    {agent.os || t("common.notFound")}
+                  </Text>
+                </Flex>
+              </Box>
 
-      <Box className="detail-content">
-        <Card mb="4">
-          <Flex align="center" gap="4" mb="4">
-            <Avatar size="5" fallback={agent.name.charAt(0)} color="indigo" />
-            <Box>
-              <Heading size="5">{agent.name}</Heading>
-            </Box>
-          </Flex>
-        </Card>
-        <Box pt="3">
-          <Grid columns={{ initial: "1" }} gap="4">
-            {/* 系统信息卡片 */}
-            <Card>
-              <Flex direction="column" gap="3">
-                <Heading size="3">{t("agent.systemInfo")}</Heading>
+              <Box>
+                <Flex align="center" gap="2">
+                  <InfoCircledIcon />
+                  <Text as="div" size="2" weight="bold">
+                    {t("agent.version")}:
+                  </Text>
+                  <Text as="div" size="2">
+                    {agent.version || t("common.notFound")}
+                  </Text>
+                </Flex>
+              </Box>
 
-                <Box>
-                  <Flex align="center" gap="2">
-                    <DesktopIcon />
-                    <Text as="div" size="2" weight="bold">
-                      {t("agent.os")}:
-                    </Text>
-                    <Text as="div" size="2">
-                      {agent.os || t("common.notFound")}
-                    </Text>
-                  </Flex>
-                </Box>
+              <Box>
+                <Flex align="center" gap="2">
+                  <GlobeIcon />
+                  <Text as="div" size="2" weight="bold">
+                    {t("agent.hostname")}:
+                  </Text>
+                  <Text as="div" size="2">
+                    {agent.hostname || t("common.notFound")}
+                  </Text>
+                </Flex>
+              </Box>
 
-                <Box>
-                  <Flex align="center" gap="2">
-                    <InfoCircledIcon />
-                    <Text as="div" size="2" weight="bold">
-                      {t("agent.version")}:
-                    </Text>
-                    <Text as="div" size="2">
-                      {agent.version || t("common.notFound")}
-                    </Text>
-                  </Flex>
-                </Box>
-
-                <Box>
-                  <Flex align="center" gap="2">
-                    <GlobeIcon />
-                    <Text as="div" size="2" weight="bold">
-                      {t("agent.hostname")}:
-                    </Text>
-                    <Text as="div" size="2">
-                      {agent.hostname || t("common.notFound")}
-                    </Text>
-                  </Flex>
-                </Box>
-
-                <Box>
-                  <Flex align="center" gap="2">
-                    <Link2Icon />
-                    <Text as="div" size="2" weight="bold">
-                      {t("agent.ipAddress")}:
-                    </Text>
-                    {agent.ip_addresses ? (
-                      (() => {
-                        try {
-                          const ipArray = JSON.parse(
-                            String(agent.ip_addresses)
+              <Box>
+                <Flex align="center" gap="2">
+                  <Link2Icon />
+                  <Text as="div" size="2" weight="bold">
+                    {t("agent.ipAddress")}:
+                  </Text>
+                  {agent.ip_addresses ? (
+                    (() => {
+                      try {
+                        const ipArray = JSON.parse(String(agent.ip_addresses));
+                        if (Array.isArray(ipArray) && ipArray.length > 0) {
+                          return (
+                            <Text as="div" size="2">
+                              {ipArray[0]}
+                              {ipArray.length > 1
+                                ? ` (+${ipArray.length - 1})`
+                                : ""}
+                            </Text>
                           );
-                          if (Array.isArray(ipArray) && ipArray.length > 0) {
-                            return (
-                              <Text as="div" size="2">
-                                {ipArray[0]}
-                                {ipArray.length > 1
-                                  ? ` (+${ipArray.length - 1})`
-                                  : ""}
-                              </Text>
-                            );
-                          } else {
-                            return (
-                              <Text as="div" size="2">
-                                {String(agent.ip_addresses)}
-                              </Text>
-                            );
-                          }
-                        } catch (e) {
+                        } else {
                           return (
                             <Text as="div" size="2">
                               {String(agent.ip_addresses)}
                             </Text>
                           );
                         }
-                      })()
-                    ) : (
-                      <Text as="div" size="2" color="gray">
-                        {t("common.unknown")}
-                      </Text>
-                    )}
-                  </Flex>
-                </Box>
-
-                <Box>
-                  <Flex align="center" gap="2">
-                    <LapTimerIcon />
-                    <Text as="div" size="2" weight="bold">
-                      {t("agent.uptime")}:
-                    </Text>
-                    <Text as="div" size="2">
-                      {formatUptime(agent)}
-                    </Text>
-                  </Flex>
-                </Box>
-
-                <Box>
-                  <Flex align="center" gap="2">
-                    <ClockIcon />
-                    <Text as="div" size="2" weight="bold">
-                      {t("agent.lastUpdated")}:
-                    </Text>
-                    <Text as="div" size="2">
-                      {formatDateTime(agent.updated_at)}
-                    </Text>
-                  </Flex>
-                </Box>
-
-                {/* 如果存在多个IP地址，展示完整列表 */}
-                {agent.ip_addresses &&
-                  (() => {
-                    try {
-                      const ipArray = JSON.parse(String(agent.ip_addresses));
-                      if (Array.isArray(ipArray) && ipArray.length > 1) {
+                      } catch (e) {
                         return (
-                          <Box pl="6" mt="1">
-                            <Flex direction="column" gap="1">
-                              {ipArray.slice(1).map((ip, index) => (
-                                <Text key={index} size="2" color="gray">
-                                  {ip}
-                                </Text>
-                              ))}
-                            </Flex>
-                          </Box>
+                          <Text as="div" size="2">
+                            {String(agent.ip_addresses)}
+                          </Text>
                         );
                       }
-                      return null;
-                    } catch (e) {
-                      return null;
+                    })()
+                  ) : (
+                    <Text as="div" size="2" color="gray">
+                      {t("common.unknown")}
+                    </Text>
+                  )}
+                </Flex>
+              </Box>
+
+              <Box>
+                <Flex align="center" gap="2">
+                  <LapTimerIcon />
+                  <Text as="div" size="2" weight="bold">
+                    {t("agent.uptime")}:
+                  </Text>
+                  <Text as="div" size="2">
+                    {formatUptime(agent)}
+                  </Text>
+                </Flex>
+              </Box>
+
+              <Box>
+                <Flex align="center" gap="2">
+                  <ClockIcon />
+                  <Text as="div" size="2" weight="bold">
+                    {t("agent.lastUpdated")}:
+                  </Text>
+                  <Text as="div" size="2">
+                    {formatDateTime(agent.updated_at)}
+                  </Text>
+                </Flex>
+              </Box>
+
+              {/* 如果存在多个IP地址，展示完整列表 */}
+              {agent.ip_addresses &&
+                (() => {
+                  try {
+                    const ipArray = JSON.parse(String(agent.ip_addresses));
+                    if (Array.isArray(ipArray) && ipArray.length > 1) {
+                      return (
+                        <Box pl="6" mt="1">
+                          <Flex direction="column" gap="1">
+                            {ipArray.slice(1).map((ip, index) => (
+                              <Text key={index} size="2" color="gray">
+                                {ip}
+                              </Text>
+                            ))}
+                          </Flex>
+                        </Box>
+                      );
                     }
-                  })()}
-              </Flex>
-            </Card>
+                    return null;
+                  } catch (e) {
+                    return null;
+                  }
+                })()}
+            </Flex>
+          </Card>
 
-            {/* Agent 资源信息卡片 */}
-            <Card>
-              <Flex direction="column" gap="4">
-                <Heading size="3">{t("agent.metrics")}</Heading>
-                <AgentCard
-                  agent={agent}
-                  showIpAddress={false}
-                  showHostname={false}
-                  showLastUpdated={false}
-                ></AgentCard>
-              </Flex>
-            </Card>
-          </Grid>
-        </Box>
+          {/* Agent 资源信息卡片 */}
+          <Card className="pr-4">
+            <Flex direction="column" gap="2" className="ml-4">
+              <Heading size="3">{t("agent.metrics")}</Heading>
+              <AgentCard
+                agent={agent}
+                showIpAddress={false}
+                showHostname={false}
+                showLastUpdated={false}
+              ></AgentCard>
+            </Flex>
+          </Card>
+        </Grid>
       </Box>
-
-      <Toast.Provider swipeDirection="right">
-        <Toast.Root
-          className={`ToastRoot`}
-          open={toastOpen}
-          onOpenChange={setToastOpen}
-          duration={3000}
-          style={{
-            backgroundColor:
-              toastType === "success" ? "var(--green-9)" : "var(--red-9)",
-            borderRadius: "8px",
-            zIndex: 9999,
-          }}
-        >
-          <Toast.Title className="ToastTitle">
-            {toastType === "success" ? t("common.success") : t("common.error")}
-          </Toast.Title>
-          <Toast.Description className="ToastDescription">
-            {toastMessage}
-          </Toast.Description>
-          <Toast.Close className="ToastClose">
-            <Cross2Icon />
-          </Toast.Close>
-        </Toast.Root>
-        <Toast.Viewport className="ToastViewport" />
-      </Toast.Provider>
-    </Box>
+    </Container>
   );
 };
 

@@ -5,14 +5,24 @@ import {
   Flex,
   Heading,
   Text,
-  Button,
-  Card,
   TextField,
-  Select,
-  TextArea,
-  Table,
   IconButton,
 } from "@radix-ui/themes";
+import {
+  Button,
+  Card,
+  Textarea,
+  Select,
+  SelectContent,
+  SelectTrigger,
+  SelectItem,
+  SelectValue,
+  Table,
+  TableCell,
+  TableRow,
+  TableBody,
+  TableHeader,
+} from "@/components/ui";
 import { ArrowLeftIcon, PlusIcon, TrashIcon } from "@radix-ui/react-icons";
 import { createMonitor } from "../../api/monitors";
 import StatusCodeSelect from "../../components/StatusCodeSelect";
@@ -60,15 +70,6 @@ const CreateMonitor = () => {
   ) => {
     const newHeaders = [...headers];
     newHeaders[index][field] = value;
-
-    // 如果最后一行有输入内容，添加新的空行
-    if (
-      index === headers.length - 1 &&
-      (newHeaders[index].key || newHeaders[index].value)
-    ) {
-      newHeaders.push({ key: "", value: "" });
-    }
-
     setHeaders(newHeaders);
   };
 
@@ -142,273 +143,214 @@ const CreateMonitor = () => {
   const showBodyField = ["POST", "PUT", "PATCH"].includes(formData.method);
 
   return (
-    <Box>
-      <div className="page-container detail-page">
-        <Flex justify="between" align="center" className="detail-header">
-          <Flex align="center" gap="2">
-            <Button
-              variant="soft"
-              size="1"
-              onClick={() => navigate("/monitors")}
-            >
-              <ArrowLeftIcon />
-            </Button>
-            <Heading size="6">{t("monitor.form.title.create")}</Heading>
-          </Flex>
+    <Box className="sm:px-6 lg:px-[8%]">
+      <Flex justify="between" align="center">
+        <Flex align="center" gap="2">
+          <Button variant="secondary" onClick={() => navigate("/monitors")}>
+            <ArrowLeftIcon />
+          </Button>
+          <Heading size="6">{t("monitor.form.title.create")}</Heading>
         </Flex>
-
-        <div className="detail-content">
-          <Card>
-            <form onSubmit={handleSubmit}>
-              <Box pt="2">
-                <Flex direction="column" gap="4">
-                  <Box>
-                    <Text
-                      as="label"
-                      size="2"
-                      style={{ marginBottom: "4px", display: "block" }}
-                    >
-                      {t("monitor.form.name")} *
-                    </Text>
-                    <TextField.Input
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      placeholder={t("monitor.form.namePlaceholder")}
-                      required
-                    />
-                  </Box>
-
-                  <Box>
-                    <Text
-                      as="label"
-                      size="2"
-                      style={{ marginBottom: "4px", display: "block" }}
-                    >
-                      URL *
-                    </Text>
-                    <TextField.Input
-                      name="url"
-                      value={formData.url}
-                      onChange={handleChange}
-                      placeholder={t("monitor.form.urlPlaceholder")}
-                      required
-                    />
-                  </Box>
-
-                  <Box>
-                    <Text
-                      as="label"
-                      size="2"
-                      style={{ marginBottom: "4px", display: "block" }}
-                    >
-                      {t("monitor.form.method")} *
-                    </Text>
-                    <Select.Root
-                      name="method"
-                      value={formData.method}
-                      onValueChange={(value) =>
-                        setFormData((prev) => ({ ...prev, method: value }))
-                      }
-                    >
-                      <Select.Trigger />
-                      <Select.Content>
-                        <Select.Item value="GET">GET</Select.Item>
-                        <Select.Item value="POST">POST</Select.Item>
-                        <Select.Item value="PUT">PUT</Select.Item>
-                        <Select.Item value="DELETE">DELETE</Select.Item>
-                        <Select.Item value="HEAD">HEAD</Select.Item>
-                      </Select.Content>
-                    </Select.Root>
-                  </Box>
-
-                  <Flex gap="4">
-                    <Box style={{ flex: 1 }}>
-                      <Text
-                        as="label"
-                        size="2"
-                        style={{ marginBottom: "4px", display: "block" }}
-                      >
-                        {t("monitor.form.interval")} *
-                      </Text>
-                      <TextField.Input
-                        name="interval"
-                        type="number"
-                        value={formData.interval.toString()}
-                        onChange={handleChange}
-                        min="1"
-                        required
-                      />
-                      <Text size="1" color="gray">
-                        {t("monitor.form.intervalMin")}
-                      </Text>
-                    </Box>
-
-                    <Box style={{ flex: 1 }}>
-                      <Text
-                        as="label"
-                        size="2"
-                        style={{ marginBottom: "4px", display: "block" }}
-                      >
-                        {t("monitor.form.timeout")} *
-                      </Text>
-                      <TextField.Input
-                        name="timeout"
-                        type="number"
-                        value={formData.timeout.toString()}
-                        onChange={handleChange}
-                        min="1"
-                        required
-                      />
-                    </Box>
-                  </Flex>
-
-                  <Box>
-                    <Text
-                      as="label"
-                      size="2"
-                      style={{ marginBottom: "4px", display: "block" }}
-                    >
-                      {t("monitor.form.expectedStatus")} *
-                    </Text>
-                    <StatusCodeSelect
-                      value={formData.expectedStatus}
-                      onChange={handleStatusCodeChange}
-                      required
-                    />
-                  </Box>
-
-                  <Box>
-                    <Text
-                      as="label"
-                      size="2"
-                      style={{ marginBottom: "4px", display: "block" }}
-                    >
-                      {t("monitor.form.headers")}
-                    </Text>
-                    <Box
-                      style={{
-                        border: "1px solid var(--gray-6)",
-                        borderRadius: "6px",
-                        padding: "8px",
-                        marginBottom: "8px",
-                      }}
-                    >
-                      <Table.Root>
-                        <Table.Header>
-                          <Table.Row>
-                            <Table.ColumnHeaderCell>
-                              {t("monitor.form.headerName")}
-                            </Table.ColumnHeaderCell>
-                            <Table.ColumnHeaderCell>
-                              {t("monitor.form.headerValue")}
-                            </Table.ColumnHeaderCell>
-                            <Table.ColumnHeaderCell
-                              style={{ width: "40px" }}
-                            ></Table.ColumnHeaderCell>
-                          </Table.Row>
-                        </Table.Header>
-                        <Table.Body>
-                          {headers.map((header, index) => (
-                            <Table.Row key={index}>
-                              <Table.Cell>
-                                <TextField.Input
-                                  placeholder={t(
-                                    "monitor.form.headerNamePlaceholder"
-                                  )}
-                                  value={header.key}
-                                  onChange={(e) =>
-                                    handleHeaderChange(
-                                      index,
-                                      "key",
-                                      e.target.value
-                                    )
-                                  }
-                                />
-                              </Table.Cell>
-                              <Table.Cell>
-                                <TextField.Input
-                                  placeholder={t(
-                                    "monitor.form.headerValuePlaceholder"
-                                  )}
-                                  value={header.value}
-                                  onChange={(e) =>
-                                    handleHeaderChange(
-                                      index,
-                                      "value",
-                                      e.target.value
-                                    )
-                                  }
-                                />
-                              </Table.Cell>
-                              <Table.Cell>
-                                <IconButton
-                                  variant="soft"
-                                  color="red"
-                                  size="1"
-                                  onClick={() => removeHeader(index)}
-                                >
-                                  <TrashIcon />
-                                </IconButton>
-                              </Table.Cell>
-                            </Table.Row>
-                          ))}
-                        </Table.Body>
-                      </Table.Root>
-                      <Flex justify="end" mt="2">
-                        <Button
-                          size="1"
-                          variant="soft"
-                          onClick={() =>
-                            setHeaders([...headers, { key: "", value: "" }])
-                          }
-                        >
-                          <PlusIcon />
-                          {t("monitor.form.addHeader")}
-                        </Button>
-                      </Flex>
-                    </Box>
-                    <Text size="1" color="gray">
-                      {t("monitor.form.headersHelp")}
-                    </Text>
-                  </Box>
-
-                  {showBodyField && (
-                    <Box>
-                      <Text
-                        as="label"
-                        size="2"
-                        style={{ marginBottom: "4px", display: "block" }}
-                      >
-                        {t("monitor.form.body")}
-                      </Text>
-                      <TextArea
-                        name="body"
-                        value={formData.body}
-                        onChange={handleChange}
-                        placeholder={t("monitor.form.bodyPlaceholder")}
-                        style={{ minHeight: "100px" }}
-                      />
-                    </Box>
-                  )}
-                </Flex>
+      </Flex>
+      <Card className="my-4 pr-4">
+        <form onSubmit={handleSubmit}>
+          <Box pt="2">
+            <Flex direction="column" gap="2" className="ml-4">
+              <Box>
+                <Text as="label" size="2">
+                  {t("monitor.form.name")} *
+                </Text>
+                <TextField.Input
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder={t("monitor.form.namePlaceholder")}
+                  required
+                />
               </Box>
 
-              <Flex justify="end" mt="4" gap="2">
-                <Button variant="soft" onClick={() => navigate("/monitors")}>
-                  {t("monitor.form.cancel")}
-                </Button>
-                <Button type="submit" disabled={loading}>
-                  {loading
-                    ? t("monitor.form.creating")
-                    : t("monitor.form.create")}
-                  {!loading && <PlusIcon />}
-                </Button>
+              <Box>
+                <Text as="label" size="2">
+                  URL *
+                </Text>
+                <TextField.Input
+                  name="url"
+                  value={formData.url}
+                  onChange={handleChange}
+                  placeholder={t("monitor.form.urlPlaceholder")}
+                  required
+                />
+              </Box>
+
+              <Box>
+                <Text as="label" size="2">
+                  {t("monitor.form.method")} *
+                </Text>
+                <Select
+                  name="method"
+                  value={formData.method}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({ ...prev, method: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="GET">GET</SelectItem>
+                    <SelectItem value="POST">POST</SelectItem>
+                    <SelectItem value="PUT">PUT</SelectItem>
+                    <SelectItem value="DELETE">DELETE</SelectItem>
+                    <SelectItem value="HEAD">HEAD</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Box>
+
+              <Flex gap="4">
+                <Box>
+                  <Text as="label" size="2">
+                    {t("monitor.form.interval")} *
+                  </Text>
+                  <TextField.Input
+                    name="interval"
+                    type="number"
+                    value={formData.interval.toString()}
+                    onChange={handleChange}
+                    min="1"
+                    required
+                  />
+                  <Text size="1" color="gray">
+                    {t("monitor.form.intervalMin")}
+                  </Text>
+                </Box>
+
+                <Box>
+                  <Text as="label" size="2">
+                    {t("monitor.form.timeout")} *
+                  </Text>
+                  <TextField.Input
+                    name="timeout"
+                    type="number"
+                    value={formData.timeout.toString()}
+                    onChange={handleChange}
+                    min="1"
+                    required
+                  />
+                </Box>
               </Flex>
-            </form>
-          </Card>
-        </div>
-      </div>
+
+              <Box>
+                <Text as="label" size="2">
+                  {t("monitor.form.expectedStatus")} *
+                </Text>
+                <StatusCodeSelect
+                  value={formData.expectedStatus}
+                  onChange={handleStatusCodeChange}
+                  required
+                />
+              </Box>
+
+              <Box>
+                <Text as="label" size="2">
+                  {t("monitor.form.headers")}
+                </Text>
+                <Box>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableCell>{t("monitor.form.headerName")}</TableCell>
+                        <TableCell>{t("monitor.form.headerValue")}</TableCell>
+                        <TableCell></TableCell>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {headers.map((header, index) => (
+                        <TableRow key={index}>
+                          <TableCell>
+                            <TextField.Input
+                              placeholder={t(
+                                "monitor.form.headerNamePlaceholder"
+                              )}
+                              value={header.key}
+                              onChange={(e) =>
+                                handleHeaderChange(index, "key", e.target.value)
+                              }
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <TextField.Input
+                              placeholder={t(
+                                "monitor.form.headerValuePlaceholder"
+                              )}
+                              value={header.value}
+                              onChange={(e) =>
+                                handleHeaderChange(
+                                  index,
+                                  "value",
+                                  e.target.value
+                                )
+                              }
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <IconButton
+                              variant="soft"
+                              color="red"
+                              size="1"
+                              onClick={() => removeHeader(index)}
+                            >
+                              <TrashIcon />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+
+                  <Button
+                    variant="secondary"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setHeaders([...headers, { key: "", value: "" }]);
+                    }}
+                    className="mt-2"
+                    type="button"
+                  >
+                    <PlusIcon />
+                    {t("monitor.form.addHeader")}
+                  </Button>
+                </Box>
+                <Text size="1" color="gray">
+                  {t("monitor.form.headersHelp")}
+                </Text>
+              </Box>
+
+              {showBodyField && (
+                <Box>
+                  <Text as="label" size="2">
+                    {t("monitor.form.body")}
+                  </Text>
+                  <Textarea
+                    name="body"
+                    value={formData.body}
+                    onChange={handleChange}
+                    placeholder={t("monitor.form.bodyPlaceholder")}
+                  />
+                </Box>
+              )}
+            </Flex>
+          </Box>
+
+          <Flex justify="end" gap="2" className="ml-4">
+            <Button variant="secondary" onClick={() => navigate("/monitors")}>
+              {t("monitor.form.cancel")}
+            </Button>
+            <Button type="submit" disabled={loading} onClick={handleSubmit}>
+              {loading ? t("monitor.form.creating") : t("monitor.form.create")}
+            </Button>
+          </Flex>
+        </form>
+      </Card>
     </Box>
   );
 };
